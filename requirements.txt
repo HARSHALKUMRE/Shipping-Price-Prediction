@@ -1,0 +1,21 @@
+pandas
+pymongo
+notebook
+pymongo[srv]
+python-dotenv
+boto3
+mypy-boto3-s3
+python-multipart
+ipykernel
+matplotlib
+PyYAML
+scikit-learn
+seaborn
+from-root
+xgboost
+dill
+evidently
+catboost
+category-encoders==2.5.1.post0
+
+-e .
