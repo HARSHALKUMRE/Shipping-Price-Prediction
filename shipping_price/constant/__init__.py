@@ -1,0 +1,1 @@
+MODEL_CONFIG_FILE = "configs/model.yaml"
