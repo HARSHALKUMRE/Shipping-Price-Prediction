@@ -2,14 +2,18 @@ import sys
 from shipping_price.exception import ShippingException
 from shipping_price.logger import logging
 from shipping_price.configuration.mongo_operations import MongoDBOperation
-from shipping_price.entity.config_entity import DataIngestionConfig
-from shipping_price.entity.artifacts_entity import DataIngestionArtifacts
+from shipping_price.entity.config_entity import (DataIngestionConfig,
+                                                 DataValidationConfig)
+from shipping_price.entity.artifacts_entity import (DataIngestionArtifacts,
+                                                    DataValidationArtifacts)
 from shipping_price.components.data_ingestion import DataIngestion
+from shipping_price.components.data_validation import DataValidation
 
 
 class TrainingPipeline:
     def __init__(self):
         self.data_ingestion_config = DataIngestionConfig()
+        self.data_validation_config = DataValidationConfig()
         self.mongo_op = MongoDBOperation()
         
     
@@ -30,12 +34,33 @@ class TrainingPipeline:
         except Exception as e:
             raise ShippingException(e, sys) from e
         
+    # This method is used to start the data validation
+    def start_data_validation(
+        self, data_ingestion_artifacts: DataIngestionArtifacts   
+    ) -> DataValidationArtifacts:
+        logging.info("Entered the start_data_validation method of TrainingPipeline class") 
+        try:
+            data_validation = DataValidation(
+                data_ingestion_artifacts=data_ingestion_artifacts,
+                data_validation_config=self.data_validation_config
+            )
+            data_validation_artifact = data_validation.initiate_data_validation()
+            logging.info("Performed data validation operation")
+            logging.info("Exited the start_data_validation method of TrainingPipeline class")
+            return data_validation_artifact
+        except Exception as e:
+            raise ShippingException(e, sys) from e
+        
         
     # This method is used to start the training pipeline
     def run_pipeline(self) -> None:
         logging.info("Entered the run_pipeline method of TrainingPipeline class")
         try:
             data_ingestion_artifact = self.start_data_ingestion()
+            
+            data_validation_artifact = self.start_data_validation(
+                data_ingestion_artifacts=data_ingestion_artifact
+            )
             
             logging.info("Exited the run_pipeline method of TrainingPipeline class")
         except Exception as e:
