@@ -50,3 +50,10 @@ Model Trainer related constant start with MODEL_TRAINER VAR NAME
 MODEL_TRAINER_ARTIFACTS_DIR = "ModelTrainerArtifacts"
 MODEL_FILE_NAME = "shipping_price_model.pkl"
 MODEL_SAVE_FORMAT = ".pkl"
+
+"""
+Model Evaluation related constant start with MODEL_EVALUATION VAR NAME
+"""
+BUCKET_NAME = "shipment-price-io-files"
+S3_MODEL_NAME = "shipping_price_model.pkl"
+

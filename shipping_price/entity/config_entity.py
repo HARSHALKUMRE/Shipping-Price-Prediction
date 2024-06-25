@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 from from_root import from_root
-#from shipping_price.configuration.s3_operations import S3Operation
+from shipping_price.configuration.s3_operations import S3Operation
 from shipping_price.utils.main_utils import MainUtils
 from shipping_price.constant import *
 
@@ -86,3 +86,27 @@ class ModelTrainerConfig:
         self.TRAINED_MODEL_FILE_PATH = os.path.join(
             from_root(), ARTIFACTS_DIR, MODEL_TRAINER_ARTIFACTS_DIR, MODEL_FILE_NAME
         )
+        
+
+@dataclass
+class ModelEvaluationConfig:
+    def __init__(self):
+        self.S3_OPERATIONS = S3Operation()
+        self.UTILS = MainUtils()
+        self.BUCKET_NAME: str = BUCKET_NAME
+        self.BEST_MODEL_PATH: str = os.path.join(
+            from_root(), ARTIFACTS_DIR, MODEL_TRAINER_ARTIFACTS_DIR, MODEL_FILE_NAME
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
