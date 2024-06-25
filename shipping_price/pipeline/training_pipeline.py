@@ -2,21 +2,25 @@ import sys
 from shipping_price.exception import ShippingException
 from shipping_price.logger import logging
 from shipping_price.configuration.mongo_operations import MongoDBOperation
+from shipping_price.configuration.s3_operations import S3Operation
 from shipping_price.entity.config_entity import (DataIngestionConfig,
                                                  DataValidationConfig,
                                                  DataTransformationConfig,
                                                  ModelTrainerConfig,
-                                                 ModelEvaluationConfig)
+                                                 ModelEvaluationConfig,
+                                                 ModelPusherConfig)
 from shipping_price.entity.artifacts_entity import (DataIngestionArtifacts,
                                                     DataValidationArtifacts,
                                                     DataTransformationArtifacts,
                                                     ModelTrainerArtifacts,
-                                                    ModelEvaluationArtifacts)
+                                                    ModelEvaluationArtifacts,
+                                                    ModelPusherArtifacts)
 from shipping_price.components.data_ingestion import DataIngestion
 from shipping_price.components.data_validation import DataValidation
 from shipping_price.components.data_transformation import DataTransformation
 from shipping_price.components.model_trainer import ModelTrainer
 from shipping_price.components.model_evaluation import ModelEvaluation
+from shipping_price.components.model_pusher import ModelPusher
 
 class TrainingPipeline:
     def __init__(self):
@@ -25,7 +29,9 @@ class TrainingPipeline:
         self.data_transformation_config = DataTransformationConfig()
         self.model_trainer_config = ModelTrainerConfig()
         self.model_evaluation_config = ModelEvaluationConfig()
+        self.model_pusher_config = ModelPusherConfig()
         self.mongo_op = MongoDBOperation()
+        self.s3 = S3Operation()
         
     
     # This method is used to start the data ingestion
@@ -116,6 +122,29 @@ class TrainingPipeline:
         except Exception as e:
             raise ShippingException(e, sys) from e
         
+    # This method is used to start the model pusher
+    def start_model_pusher(
+        self,
+        model_trainer_artifact: ModelTrainerArtifacts,
+        s3: S3Operation,
+        data_transformation_artifact: DataTransformationArtifacts,
+    ) -> ModelPusherArtifacts:
+        logging.info("Entered the start_model_pusher method of TrainingPipeline class")
+        try:
+            model_pusher = ModelPusher(
+                model_trainer_artifact=model_trainer_artifact,
+                model_pusher_config=self.model_pusher_config,
+                data_transformation_artifact=data_transformation_artifact,
+                s3=s3
+            )
+            model_pusher_artifact = model_pusher.initiate_model_pusher()
+            logging.info("Initiated the model pusher")
+            logging.info("Exited the start_model_pusher method of TrainingPipeline class")
+            return model_pusher_artifact
+        
+        except Exception as e:
+            raise ShippingException(e, sys) from e
+        
         
     # This method is used to start the training pipeline
     def run_pipeline(self) -> None:
@@ -141,9 +170,14 @@ class TrainingPipeline:
             )
             
             if not model_evaluation_artifact.is_model_accepted:
-                print("Model not accepted.")
-            else:
-                print("Model accepted.")
+                logging.info("Model not accepted.")
+                return None
+            
+            model_pusher_artifact = self.start_model_pusher(
+                model_trainer_artifact=model_trainer_artifact,
+                s3=self.s3,
+                data_transformation_artifact=data_transformation_artifact
+            )
                 
             logging.info("Exited the run_pipeline method of TrainingPipeline class")
         except Exception as e:
